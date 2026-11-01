@@ -1,11 +1,11 @@
 
-name: Delete uploads HTML Files
+name: Delete Uploads HTML Files
 
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: "Confirm deletion of HTML files inside uploads/"
+        description: "Confirm deletion (all HTML except index.html)"
         required: true
         type: boolean
         default: false
@@ -22,13 +22,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Delete HTML files from uploads only
-        id: delete
+      - name: Delete HTML files only
         run: |
           python3 <<'PY'
           from pathlib import Path
           import subprocess
 
+          # Target folder
           folder = Path("uploads")
 
           if not folder.is_dir():
@@ -36,33 +36,45 @@ jobs:
 
           deleted = []
 
+          # Check only direct files inside uploads
           for file in folder.iterdir():
-              if (
-                  file.is_file()
-                  and not file.is_symlink()
-                  and file.suffix.lower() == ".html"
-              ):
-                  subprocess.run(
-                      ["git", "rm", "--", str(file)],
-                      check=True
-                  )
-                  deleted.append(file.name)
 
+              # Ignore folders and symbolic links
+              if not file.is_file() or file.is_symlink():
+                  continue
+
+              # Always preserve index.html
+              if file.name.lower() == "index.html":
+                  print(f"KEEP: {file}")
+                  continue
+
+              # Only HTML extensions are eligible
+              if file.suffix.lower() != ".html":
+                  print(f"KEEP: {file}")
+                  continue
+
+              # Delete eligible HTML files
+              subprocess.run(
+                  ["git", "rm", "--", file.as_posix()],
+                  check=True
+              )
+
+              deleted.append(file.name)
+
+          print("\n========== DELETE REPORT ==========")
+          print(f"Folder: {folder}")
           print(f"Total HTML files deleted: {len(deleted)}")
 
           for name in deleted:
-              print(f"Deleted: {name}")
+              print(f"DELETED: {name}")
 
-          with open("/tmp/deleted_count", "w") as f:
-              f.write(str(len(deleted)))
+          print("===================================")
           PY
 
       - name: Commit deletions
         run: |
-          COUNT=$(cat /tmp/deleted_count)
-
-          if [ "$COUNT" -eq 0 ]; then
-            echo "No HTML files found. Nothing to delete."
+          if git diff --cached --quiet; then
+            echo "No eligible HTML files found."
             exit 0
           fi
 
