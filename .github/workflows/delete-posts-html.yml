@@ -1,0 +1,87 @@
+
+name: Delete Posts HTML Files
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Confirm deletion of HTML files except index.html inside posts/"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  delete-html:
+    if: github.ref == 'refs/heads/main' && inputs.confirm == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Delete HTML files from posts only
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          # Target folder
+          folder = Path("posts")
+
+          # Verify target folder
+          if not folder.is_dir():
+              raise SystemExit("ERROR: posts folder not found")
+
+          deleted = []
+
+          # Check direct files only
+          for file in folder.iterdir():
+
+              # Never process folders or symbolic links
+              if not file.is_file() or file.is_symlink():
+                  continue
+
+              # Always preserve index.html
+              if file.name.lower() == "index.html":
+                  print(f"KEEP: {file}")
+                  continue
+
+              # Only delete files ending in .html
+              if file.suffix.lower() != ".html":
+                  print(f"KEEP: {file}")
+                  continue
+
+              # Remove only the eligible HTML file
+              subprocess.run(
+                  ["git", "rm", "--", file.as_posix()],
+                  check=True
+              )
+
+              deleted.append(file.name)
+
+          # Final report
+          print("\n========== DELETE REPORT ==========")
+          print(f"Target folder: {folder}")
+          print(f"Total HTML files deleted: {len(deleted)}")
+
+          for name in deleted:
+              print(f"DELETED: {name}")
+
+          print("===================================")
+          PY
+
+      - name: Commit deletions
+        run: |
+          if git diff --cached --quiet; then
+            echo "No eligible HTML files found."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git commit -m "Delete HTML files from posts folder, preserve index.html"
+          git push
